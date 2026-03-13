@@ -1,10 +1,11 @@
+import Navbar from '../components/Navbar';
 import Header from '../components/Header'
 
 function Home() {
   return (
     <main>
+      <Navbar />
       <Header />
-
       <section className="placeholder-section">
         <div className="placeholder-card">
           <p className="section-label">Upcoming Events</p>
@@ -18,7 +19,7 @@ function Home() {
         </div>
       </section>
     </main>
-  )
+  );
 }
 
 export default Home
