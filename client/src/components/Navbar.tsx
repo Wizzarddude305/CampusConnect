@@ -1,4 +1,8 @@
+import { useNavigate} from 'react-router-dom';
+
 function Navbar() {
+  const navigate = useNavigate();
+
   return (
     <nav className="navbar">
       <div className="navbar-brand">CampusConnect</div>
@@ -9,7 +13,9 @@ function Navbar() {
         <a href="#">About</a>
       </div>
 
-      <button className="login-button">Student Login</button>
+      <button className="login-button" onClick={() => navigate('/login')}>
+        Student Login
+      </button>
     </nav>
   )
 }

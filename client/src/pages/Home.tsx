@@ -1,3 +1,4 @@
+import Navbar from '../components/Navbar';
 import Header from '../components/Header'
 import { useEffect, useState } from "react";
 
@@ -17,8 +18,8 @@ function Home() {
   }, []);
   return (
     <main>
+      <Navbar />
       <Header />
-
       <section className="placeholder-section">
         <div className="placeholder-card">
           <p className="section-label">Upcoming Events</p>
@@ -45,7 +46,7 @@ function Home() {
         </div>
       </section>
     </main>
-  )
+  );
 }
 
 export default Home
