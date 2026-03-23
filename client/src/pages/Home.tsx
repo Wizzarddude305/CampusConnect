@@ -30,7 +30,6 @@ function Home() {
             and event creation features are implemented.
           </p>
 
-          {/* 👇 ADD THIS TEMP TEST SECTION */}
           <h3>Test Users (from backend):</h3>
 
           {users.length === 0 ? (
