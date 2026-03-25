@@ -25,7 +25,7 @@
   font-weight: 600;
 }
 
-.login-button {
+.log-button {
   border: none;
   border-radius: 999px;
   background-color: var(--gator-blue);
@@ -40,4 +40,11 @@
 .login-button:hover {
   background-color: var(--gator-orange);
   transform: translateY(-1px);
+}
+
+.logged-in-banner {
+  display: flex;
+  align-items: center;    
+  gap: 1.5rem;            
+  border-radius: 8px;
 }

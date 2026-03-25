@@ -1,10 +1,11 @@
 import { useNavigate} from 'react-router-dom';
-import { useAuth } from '../pages/Login';
+import { useAuth } from './AuthContext';
 import "../styles/navbar.css"
 
 function Navbar() {
   const navigate = useNavigate();
-  const {loggedIn, logout} = useAuth();
+  const {user, logout} = useAuth();
+
   return (
     <nav className="navbar">
       <div className="navbar-brand">CampusConnect</div>
@@ -13,13 +14,13 @@ function Navbar() {
         <a href="#">Organizations</a>
         <a href="#">About</a>
       </div>
-      {loggedIn ? (
-        <div>
-          <span>Welcome back!</span>
-          <button onClick={logout}>Log Out</button>
+      {user ? (
+        <div className="logged-in-banner">
+          <span>Welcome back {user.userName}!</span>
+          <button className="log-button" onClick={logout}>Log Out</button>
         </div>
       ) : (
-        <button className="login-button" onClick={() => navigate('/login')}>
+        <button className="log-button" onClick={() => navigate('/login')}>
           Student Login
         </button>
       )}
