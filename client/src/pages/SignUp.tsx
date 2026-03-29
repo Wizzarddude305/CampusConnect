@@ -9,7 +9,11 @@ function SignUp(){
 
     const signUp = async () => {
         console.log("User signed up request:", email, " ", password);
-        navigate('/');
+        const newUser = {
+          email: email, 
+          password: password
+        }
+        navigate('/login');
       };
 
     return (

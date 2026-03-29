@@ -12,7 +12,6 @@ export default function Login(){
 
     const {login} = useAuth();
 
-
     const signIn = async () => {
         try{
             console.log("User signed in request:", email, " ", password);
