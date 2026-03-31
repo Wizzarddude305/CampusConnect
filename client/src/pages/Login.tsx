@@ -6,7 +6,7 @@ import { useAuth } from "../components/AuthContext"
 export default function Login(){
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-    const [name, setName] = useState("John Doe")
+    const [name, setName] = useState("")
     const [authentication, setAuth] = useState(true);
     const navigate = useNavigate();
 
@@ -14,16 +14,26 @@ export default function Login(){
 
     const signIn = async () => {
         try{
-            console.log("User signed in request:", email, " ", password);
+           const user = {
+              email: email,
+              password: password
+            }
+            
             //Do authentication in back in here
-            if (authentication == true){
-              console.log("User ", name, " authenticated successfully");
+            const response = await fetch("http://localhost:3001/api/login", {
+              method :"POST",
+              headers: {
+                  'Content-Type': 'application/json',
+                },
+              body:JSON.stringify(user), 
+            })
+
+            if (response.status == 300){
               login(email, name)
               navigate('/');
             }
-   
         } catch (err){
-            console.error(err)
+            console.error(`FrontEnd: ${err}`)
         }
 
     }

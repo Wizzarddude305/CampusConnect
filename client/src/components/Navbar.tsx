@@ -16,7 +16,7 @@ function Navbar() {
       </div>
       {user ? (
         <div className="logged-in-banner">
-          <span>Welcome back {user.userName}!</span>
+          <span>Welcome back {user.userName.length > 0 ? user.userName : user.userEmail}!</span>
           <button className="log-button" onClick={logout}>Log Out</button>
         </div>
       ) : (
