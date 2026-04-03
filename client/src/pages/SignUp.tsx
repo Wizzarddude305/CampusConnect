@@ -8,8 +8,30 @@ function SignUp(){
     const navigate = useNavigate();
 
     const signUp = async () => {
-        console.log("User signed up request:", email, " ", password);
-        navigate('/');
+        const newUser = {
+          email: email, 
+          password: password
+        }
+        console.log(JSON.stringify(newUser))
+        try{
+
+            const response = await fetch("http://localhost:3001/api/signup", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body:JSON.stringify(newUser), 
+          })
+          console.log("response got through")
+          const result = await response
+          console.log(result)
+        }catch(err){
+          //Task: Perhaps we can make the error more visible to the user aka change the page according to it
+          console.error(err)
+        }
+       
+
+        navigate('/login');
       };
 
     return (
