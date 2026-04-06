@@ -3,20 +3,21 @@ import { createContext, useState, useContext, type ReactNode } from 'react';
 
 
 export const AuthContext = createContext<{
-  user: { userEmail: string; userName: string } | null;
-  login: (email:string , name:string) => void;
+  user: { userEmail: string; userName: string; privilege?: string } | null;
+  login: (email:string , name:string, privilege?: string) => void;
   logout: () => void;
 } | null>(null);
 
 
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<{userEmail:string, userName:string} | null>(null);
+  const [user, setUser] = useState<{userEmail:string, userName:string, privilege?: string} | null>(null);
 
-  const login = (email:string , name:string ) => {
+  const login = (email:string , name:string, privilege?: string) => {
         setUser({ 
             userEmail: email, 
-            userName: name 
+            userName: name,
+            privilege: privilege || 'user'
         });
     };
 

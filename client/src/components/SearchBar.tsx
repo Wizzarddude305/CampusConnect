@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import { useState } from 'react';
 import "../styles/auth.css"
 function SearchBar(){
     const [query, setQuery] = useState('');
@@ -6,6 +6,8 @@ function SearchBar(){
         <div className="search-row">
             <input
               type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder="Search will be enabled with future event and organization data"
               className="search-input"
             />

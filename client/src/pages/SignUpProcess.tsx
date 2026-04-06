@@ -7,9 +7,9 @@ function SignUpComp1(){
     const navigate = useNavigate()
 
     const updateUserName = async () => {
-        const updates = {name: name}
+        const updates = { name }
         try{
-            const response = await fetch("http://localhost:3001/api/update",{
+            await fetch("http://localhost:3001/api/update",{
                 method: "POST", 
                headers: {
                   'Content-Type': 'application/json',
@@ -22,9 +22,9 @@ function SignUpComp1(){
 
     }
 
-    const cancelSignUp = async () =>({
-
-    })
+    const cancelSignUp = () => {
+      navigate('/login')
+    }
 
     return(
         <div className="auth-container">
@@ -42,8 +42,8 @@ function SignUpComp1(){
     )
 }
 
-export default function SingUpProcess(){
-    const [stage, setStage] = useState(1)
+export default function SignUpProcess(){
+    const [stage] = useState(1)
 
     return(
         <div>
