@@ -16,6 +16,39 @@ app.get("/api/test/users", (req,res) => {
     
 })
 
+app.get("/api/user", async (req, res) => {
+    try {
+        const userId = req.query.id || 1; // Default to user 1 for testing
+        const result = await pool.query("SELECT id, email, privilege FROM users WHERE id = $1", [userId]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "User not found." });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error("Error fetching user:", err);
+        res.status(500).json({ message: "Unable to fetch user." });
+    }
+});
+
+app.get("/api/events", async (req, res) => {
+    try {
+        // Check if user has admin privilege (via query parameter or header)
+        const privilege = req.query.privilege || req.headers['x-privilege'];
+        
+        if (privilege !== "admin") {
+            return res.status(403).json({ message: "Only admins can view events." });
+        }
+
+        const result = await pool.query("SELECT * FROM events ORDER BY id");
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error loading events:", err);
+        res.status(500).json({ message: "Unable to load events." });
+    }
+});
+
 app.post("/api/login", async (req, res)=>{
     const {email, password} = req.body
     try{
@@ -23,22 +56,22 @@ app.post("/api/login", async (req, res)=>{
         const values = [email]
         const result = await pool.query(sql, values)
 
-        if (!result.rows){
-            res.status(404).send("User is not found")
-            return
+        if (!result.rows || result.rows.length === 0){
+            return res.status(404).json({ message: "User not found." });
         }
 
-        const valid = bcrypt.compare(password, result.rows[0].password_hash)
+        const user = result.rows[0];
+        const valid = await bcrypt.compare(password, user.password_hash)
 
         if (valid){
-            res.status(300).send("Logged in")
-        }else{
-            res.status(401).send("User password is incorrect")
+            return res.json({ id: user.id, email: user.email, privilege: user.privilege || 'user' });
+        } else {
+            return res.status(401).json({ message: "Invalid email or password." });
         }
 
     }catch(err){
         console.error(err)
-        res.status(500).send("Database Error")
+        res.status(500).json({ message: "Database Error" })
     }
 })
 
@@ -68,6 +101,35 @@ app.post("/api/signup", async (req, res) =>{
 app.post("/api/update", async (req, res) =>{
 
 })
+
+app.post("/api/assign-privilege", async (req, res) => {
+    const { userId, privilege } = req.body;
+
+    if (!userId || !privilege) {
+        return res.status(400).json({ message: "userId and privilege are required." });
+    }
+
+    const validPrivileges = ["user", "organization", "admin"];
+    if (!validPrivileges.includes(privilege)) {
+        return res.status(400).json({ message: "Invalid privilege. Must be one of: user, organization, admin." });
+    }
+
+    try {
+        const result = await pool.query(
+            "UPDATE users SET privilege = $1 WHERE id = $2 RETURNING id, email, privilege",
+            [privilege, userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        res.json({ message: "Privilege assigned successfully.", user: result.rows[0] });
+    } catch (err) {
+        console.error("Error assigning privilege:", err);
+        res.status(500).json({ message: "Database error while assigning privilege." });
+    }
+});
 
 const port = process.env.PORT || 3001
 app.listen(port, "127.0.0.1", () => {

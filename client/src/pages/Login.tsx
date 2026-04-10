@@ -6,8 +6,6 @@ import { useAuth } from "../components/AuthContext"
 export default function Login(){
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-    const [name, setName] = useState("")
-    const [authentication, setAuth] = useState(true);
     const navigate = useNavigate();
 
     const {login} = useAuth();
@@ -19,7 +17,6 @@ export default function Login(){
               password: password
             }
             
-            //Do authentication in back in here
             const response = await fetch("http://localhost:3001/api/login", {
               method :"POST",
               headers: {
@@ -28,9 +25,13 @@ export default function Login(){
               body:JSON.stringify(user), 
             })
 
-            if (response.status == 300){
-              login(email, name)
+            if (response.ok){
+              const data = await response.json();
+              login(data.email, data.email, data.privilege);
               navigate('/');
+            } else {
+              const error = await response.json().catch(() => null);
+              console.error('Login failed', error || response.status);
             }
         } catch (err){
             console.error(`FrontEnd: ${err}`)
