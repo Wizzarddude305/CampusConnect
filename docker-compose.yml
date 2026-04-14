@@ -1,6 +1,9 @@
 services:
   backend:
     build: ./server
+    volumes:
+    - ./server:/app
+    - /app/node_modules
     container_name: campusconnect-backend
     ports:
       - "3000:3000"
@@ -19,6 +22,9 @@ services:
 
   frontend:
     build: ./client
+    volumes:
+    - ./client:/app
+    - /app/node_modules
     container_name: campusconnect-frontend
     ports:
       - "5173:5173"
