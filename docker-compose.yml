@@ -1,15 +1,35 @@
 services:
   backend:
     build: ./server
+    container_name: campusconnect-backend
     ports:
-      - "5000:5000"
+      - "3000:3000"
     env_file:
       - ./server/.env  
+    environment:
       - NODE_ENV=production
+      - BACKEND_URL=http://localhost:3000
+    networks:
+      - campusconnect-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
 
   frontend:
     build: ./client
+    container_name: campusconnect-frontend
     ports:
-      - "3000:80"
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    networks:
+      - campusconnect-network
+
+networks:
+  campusconnect-network:
+    driver: bridge

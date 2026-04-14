@@ -13,7 +13,7 @@ function Home() {
 
   useEffect(() => {
     if (isAdmin) {
-      fetch("http://localhost:3001/api/events?privilege=admin")
+      fetch("http://localhost:3000/api/events?privilege=admin")
         .then((res) => res.json())
         .then((data) => {
           console.log("EVENTS:", data);
@@ -24,7 +24,7 @@ function Home() {
       setEvents([]);
     }
 
-    fetch("http://localhost:3001/api/test/users")
+    fetch("http://localhost:3000/api/test/users")
       .then((res) => res.json())
       .then((data) => {
         console.log("DATA:", data);

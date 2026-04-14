@@ -12,6 +12,10 @@ app.get("/", (req, res) => {
     res.send("the server is running");
 })
 
+app.get("/health", (req, res) => {
+  res.status(200).send("healthy");
+});
+
 app.get("/api/test/users", (req,res) => {
     
 })
@@ -131,7 +135,7 @@ app.post("/api/assign-privilege", async (req, res) => {
     }
 });
 
-const port = process.env.PORT || 3001
-app.listen(port, "127.0.0.1", () => {
+const port = process.env.PORT || 3000
+app.listen(port, "0.0.0.0", () => {
     console.log(`✅ the server started on port ${port}`);
 })
