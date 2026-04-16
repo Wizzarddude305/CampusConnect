@@ -3,6 +3,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import { AuthProvider } from './components/AuthContext';
+import { ToastContainer } from 'react-toastify';
 import './App.css'
 
 function App() {
@@ -16,7 +17,9 @@ function App() {
           <Route path="*" element={<div>Page Not Found</div>} />
         </Routes>
       </Router>
+      <ToastContainer/>
     </AuthProvider>
+  
   )
 }
 
