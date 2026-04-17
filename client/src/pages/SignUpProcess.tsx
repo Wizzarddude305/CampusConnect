@@ -9,7 +9,7 @@ function SignUpComp1(){
     const updateUserName = async () => {
         const updates = { name }
         try{
-            await fetch("http://localhost:3001/api/update",{
+            await fetch("http://localhost:3000/api/update",{
                 method: "POST", 
                headers: {
                   'Content-Type': 'application/json',

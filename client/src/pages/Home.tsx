@@ -11,6 +11,28 @@ function Home() {
   const { user } = useAuth();
   const isAdmin = user?.privilege === 'admin';
 
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetch("http://localhost:3000/api/events?privilege=admin")
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("EVENTS:", data);
+          setEvents(data);
+        })
+        .catch((err) => console.error("EVENT ERROR:", err));
+    } else {
+      setEvents([]);
+    }
+
+    fetch("http://localhost:3000/api/test/users")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("DATA:", data);
+        setUsers(data);
+      })
+      .catch((err) => console.error("ERROR:", err));
+  }, [isAdmin, user?.privilege]);
   return (
     <main>
       <Navbar />
