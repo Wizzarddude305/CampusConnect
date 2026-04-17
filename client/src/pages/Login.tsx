@@ -2,10 +2,12 @@ import { useState } from "react"
 import { useNavigate } from 'react-router-dom';
 import '../styles/auth.css';
 import { useAuth } from "../components/AuthContext"
+import {toast} from "react-toastify"
 
 export default function Login(){
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [isSuccess, setIsSuccess] = useState(false)
     const navigate = useNavigate();
 
     const {login} = useAuth();
@@ -36,6 +38,11 @@ export default function Login(){
         } catch (err){
             console.error(`FrontEnd: ${err}`)
         }
+            
+
+            
+            
+
 
     }
 

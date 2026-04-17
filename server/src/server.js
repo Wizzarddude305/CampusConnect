@@ -25,7 +25,7 @@ app.get("/api/user", async (req, res) => {
         const userId = req.query.id || 1; // Default to user 1 for testing
         const result = await pool.query("SELECT id, email, privilege FROM users WHERE id = $1", [userId]);
         
-        if (result.rows.length === 0) {
+        if (!result.rows) {
             return res.status(404).json({ message: "User not found." });
         }
         
@@ -36,15 +36,8 @@ app.get("/api/user", async (req, res) => {
     }
 });
 
-app.get("/api/events", async (req, res) => {
+app.get("/api/get-events", async (req, res) => {
     try {
-        // Check if user has admin privilege (via query parameter or header)
-        const privilege = req.query.privilege || req.headers['x-privilege'];
-        
-        if (privilege !== "admin") {
-            return res.status(403).json({ message: "Only admins can view events." });
-        }
-
         const result = await pool.query("SELECT * FROM events ORDER BY id");
         res.json(result.rows);
     } catch (err) {
@@ -55,12 +48,14 @@ app.get("/api/events", async (req, res) => {
 
 app.post("/api/login", async (req, res)=>{
     const {email, password} = req.body
+    if (!email){
+        console.error(err)
+    }
     try{
         const sql = "SELECT * FROM users WHERE email=$1 "
         const values = [email]
         const result = await pool.query(sql, values)
-
-        if (!result.rows || result.rows.length === 0){
+        if (result.rows.length === 0){
             return res.status(404).json({ message: "User not found." });
         }
 
@@ -68,7 +63,7 @@ app.post("/api/login", async (req, res)=>{
         const valid = await bcrypt.compare(password, user.password_hash)
 
         if (valid){
-            return res.json({ id: user.id, email: user.email, privilege: user.privilege || 'user' });
+            return res.json({ email: user.email,name: user.name , privilege: user.privilege || 'user' });
         } else {
             return res.status(401).json({ message: "Invalid email or password." });
         }
@@ -84,25 +79,51 @@ app.post("/api/signup", async (req, res) =>{
     // Amount of scrambles to do in order to hash password
     // (10 is apparently industry standard being fast and secure)
     const saltRounds = 10
+    const hashedPassword = await bcrypt.hash(password, saltRounds)
+    const queryText = `INSERT INTO users (email, password_hash) VALUES ($1 , $2);`
+    const values = [email, hashedPassword]
+
     try{
-        const hashedPassword = await bcrypt.hash(password, saltRounds)
-        const queryText = `INSERT INTO users (email, password_hash) VALUES ($1 , $2)
-        RETURNING id;`
-        const values = [email, hashedPassword]
         const result = await pool.query(queryText, values);
-        console.log(result.rows[0])
         res.status(300).send(result.rows[0])
-    }catch (err){
-        //Uniqueness of Email Problem
-        if (err.code === '23505') {
+    }catch(err){
+        if (result.status === '23505') {
             return res.status(409).send("Email already in use");
         }
+
         console.error(err)
         res.status(500).send("Database Error")
     }
 })
 
-app.post("/api/update", async (req, res) =>{
+app.post("/api/create-event", async (req, res) => {
+    const { title, date, time, location, description } = req.body;
+    const queryText = `INSERT INTO events (title, date ,time, location, description) VALUES ($1, $2, $3, $4, $5);`
+    const values = [title, date, time, location, description];
+    try{
+        const result = await pool.query(queryText, values);
+        res.status(201).json({ message: "Event created successfully.", eventId: result.rows[0]});
+    }catch(err){
+        console.error("Error creating event:", err);
+        res.status(500).json({ message: "Database error while creating event." });
+    }
+})
+
+app.delete("/api/delete-event", async (req, res) =>{
+    console.log(req.body)
+    const {eventId}  = req.body; 
+    const queryText = `DELETE FROM events WHERE id = $1`
+    const values = [eventId]
+     try{
+        const result = await pool.query(queryText, values);
+        res.status(200).json({ message: "Event Deleted successfully.", deltedEventId: result.rows[0]});
+    }catch(err){
+        console.error("Error deleting event:", err);
+        res.status(500).json({ message: "Database error while creating event." });
+    }
+})
+
+app.post("/api/update-event", async (req, res) =>{
 
 })
 

@@ -1,0 +1,19 @@
+
+.event-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 3vh;
+}
+
+
+#createEventButton{
+    margin-left: clamp(10px, 2vw, 30px);
+}
+
+
+.event-title{
+    margin-top: 0;
+}
+
+
