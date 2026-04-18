@@ -7,7 +7,6 @@ import {toast} from "react-toastify"
 export default function Login(){
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-    const [isSuccess, setIsSuccess] = useState(false)
     const navigate = useNavigate();
 
     const {login} = useAuth();

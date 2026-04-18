@@ -25,8 +25,6 @@ app.get("/api/test/users", (req,res) => {
 
 app.get("/api/user", authMiddleware, async (req, res) => {
     try {
-        console.log("REQ.USER:", req.user);
-
         if (!req.user || !req.user.userId) {
             return res.status(401).json({ message: "Unauthorized" });
         }
@@ -124,20 +122,28 @@ app.post("/api/signup", async (req, res) =>{
 })
 
 app.post("/api/create-event", async (req, res) => {
+
     const { title, date, time, location, description } = req.body;
+    //If no time or date is stated then return ERROR 400 (Bad Request) stating the lack of such.
+    if (time === null || date === null){
+        res.status(400).json({message: "Missing Date or/and Time from event creation"})
+    }
+
     const queryText = `INSERT INTO events (title, date ,time, location, description) VALUES ($1, $2, $3, $4, $5);`
     const values = [title, date, time, location, description];
     try{
+        //Send the Query to the server 
         const result = await pool.query(queryText, values);
+        //If successful move to this line and send a succesful message to the front end else you go to the catch error case
         res.status(201).json({ message: "Event created successfully.", eventId: result.rows[0]});
     }catch(err){
+        //If there's an error in the query state it in the front end as a database error
         console.error("Error creating event:", err);
         res.status(500).json({ message: "Database error while creating event." });
     }
 })
 
 app.delete("/api/delete-event", async (req, res) =>{
-    console.log(req.body)
     const {eventId}  = req.body; 
     const queryText = `DELETE FROM events WHERE id = $1`
     const values = [eventId]

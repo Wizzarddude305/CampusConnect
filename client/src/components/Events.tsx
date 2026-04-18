@@ -17,13 +17,13 @@ function EventList({isAdmin}: MyComponentProps){
     const [isEditing, setIsEditing] = useState(false)
     const [editingEventId, setEditingEventId] = useState<number | null>(null);
     const [isCreatingEvent, setIsCreatingEvent] = useState(false);
-    const [deletingEventId, setDeletingEventId] = useState(0)
 
     const isEditor = isAdmin || eventCreator === "currentUser";
 
       
     const displayEvents = () =>{
-            fetch("http://localhost:3001/api/get-events")
+            console.log("Redisplaying events")
+            fetch("http://localhost:3000/api/get-events")
             .then((res) => res.json())
             .then((data) => {
               setEvents(data);
@@ -58,10 +58,9 @@ function EventList({isAdmin}: MyComponentProps){
     }
 
 
-    const deletingEvent = async() =>{
+    const deletingEvent = async(deletingEventId: number) =>{
         setIsEditing(true)
-        console.log(deletingEventId)
-        const response = await fetch("http://localhost:3001/api/delete-event", {
+        const response = await fetch("http://localhost:3000/api/delete-event", {
           method: 'DELETE',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ eventId: deletingEventId })
@@ -70,13 +69,15 @@ function EventList({isAdmin}: MyComponentProps){
         if (response.ok){
           const data = await response.json();
           notification(true, data.message)
-          console.log("Sent success notification")
+          const updateEvents = events.filter((event) => event.id !== deletingEventId)
+          console.log(deletingEventId)
+          console.log(updateEvents)
+          setEvents(updateEvents)
         } else {
           const error = await response.json().catch(() => null);
           console.error(`Delting Event Failed: , ${error} || ${response.status}`);
           notification(false, `Delting Event Failed ${response.status}`)
         }
-        displayEvents()
       }
 
     return(
@@ -105,7 +106,7 @@ function EventList({isAdmin}: MyComponentProps){
                                 {event.location && <div><p><strong>Location:</strong> {event.location}</p></div>}
                                 {event.description && <div><p style={{ flex: 1 }}> <strong>Description: </strong>{event.description}</p></div>}
                                 {isEditor && <button style= {{ marginTop: 'auto' }} onClick={() => setEditingEventId(event.id)}>Edit Event</button>}
-                                {isEditor && <button style={{ marginTop: 'auto' }} onClick={() => {setDeletingEventId(event.id); deletingEvent()}}>Delete Event</button>}
+                                {isEditor && <button style={{ marginTop: 'auto' }} onClick={() => {deletingEvent(event.id)}}>Delete Event</button>}
                                 <button style={{ marginTop: 'auto' }}>Sign up</button>
                             </div>
                         )}
