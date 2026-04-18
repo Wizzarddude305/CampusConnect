@@ -1,33 +1,75 @@
-// AuthContext.tsx
-import { createContext, useState, useContext, type ReactNode } from 'react';
+import { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
 
+type User = {
+  userEmail: string;
+  userName: string;
+  privilege?: string;
+};
 
-export const AuthContext = createContext<{
-  user: { userEmail: string; userName: string; privilege?: string } | null;
-  login: (email:string , name:string, privilege?: string) => void;
+type AuthContextType = {
+  user: User | null;
+  loading: boolean;
+  login: (token: string, email: string, name: string, privilege?: string) => void;
   logout: () => void;
-} | null>(null);
+};
 
-
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<{userEmail:string, userName:string, privilege?: string} | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (email:string , name:string, privilege?: string) => {
-        setUser({ 
-            userEmail: email, 
-            userName: name,
-            privilege: privilege || 'user'
+  //login persistence on page refresh
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    fetch("http://localhost:3000/api/user", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Not authenticated");
+        return res.json();
+      })
+      .then(data => {
+        setUser({
+          userEmail: data.email,
+          userName: data.name || data.email,
+          privilege: data.privilege,
         });
-    };
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+}, []);
+
+  const login = (token: string, email: string, name: string, privilege?: string) => {
+    localStorage.setItem("token", token);
+
+    setUser({
+      userEmail: email,
+      userName: name,
+      privilege: privilege || 'user',
+    });
+  };
 
   const logout = () => {
+    localStorage.removeItem("token");
     setUser(null);
- }
-
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
