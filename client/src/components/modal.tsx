@@ -11,7 +11,7 @@ export const EventCreationModal = ({onClose, onCreation}: {onClose: () => void, 
     const [time, setTime] = useState('');
 
     const createEvent = async () => {
-       const response = await fetch('http://localhost:3001/api/create-event', {
+       const response = await fetch('http://localhost:3000/api/create-event', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({title, date, time, location, description})

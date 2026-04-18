@@ -12,7 +12,6 @@ function SignUp(){
           email: email, 
           password: password
         }
-        console.log(JSON.stringify(newUser))
         try{
 
             const response = await fetch("http://localhost:3000/api/signup", {
@@ -22,9 +21,7 @@ function SignUp(){
             },
             body:JSON.stringify(newUser), 
           })
-          console.log("response got through")
           const result = await response
-          console.log(result)
         }catch(err){
           //Task: Perhaps we can make the error more visible to the user aka change the page according to it
           console.error(err)
