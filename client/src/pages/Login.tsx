@@ -47,19 +47,20 @@ export default function Login(){
     return (
         <div className="auth-container">
           <div className="auth-box">
-            <h2>Login</h2>
-            <input 
-              type="text" 
-              placeholder="Email or Username.." 
-              onChange={(e) => setEmail(e.target.value)} 
+            <div className="auth-brand">CampusConnect</div>
+            <h2>Welcome back</h2>
+            <input
+              type="text"
+              placeholder="Email"
+              onChange={(e) => setEmail(e.target.value)}
             />
-            <input 
-              type="password" 
-              placeholder="Password.." 
-              onChange={(e) => setPassword(e.target.value)} 
+            <input
+              type="password"
+              placeholder="Password"
+              onChange={(e) => setPassword(e.target.value)}
             />
-            <button onClick={signIn}>Sign In</button>
-            <button onClick={() => navigate('/signUp')}>Click here to sign up</button>
+            <button className="auth-btn-primary" onClick={signIn}>Sign In</button>
+            <button className="auth-btn-secondary" onClick={() => navigate('/signUp')}>Don't have an account? Sign up</button>
           </div>
       </div>
     );

@@ -27,6 +27,7 @@
   background: linear-gradient(135deg, var(--gator-blue), #0d4cb3);
   color: var(--white);
   padding: 4rem 2rem 3rem;
+  text-align: center;
 }
 
 .header-content {
@@ -52,7 +53,7 @@
   max-width: 700px;
   font-size: 1.15rem;
   line-height: 1.6;
-  margin-bottom: 2rem;
+  margin: 0 auto 2rem;
   color: #eef4ff;
 }
 
@@ -60,11 +61,13 @@
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .search-input {
   flex: 1;
   min-width: 260px;
+  max-width: 480px;
   padding: 1rem 1.2rem;
   border: none;
   border-radius: 999px;
@@ -81,6 +84,24 @@
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.search-button:hover {
+  background-color: #d93a10;
+  transform: translateY(-1px);
+}
+
+.search-filter {
+  padding: 1rem 1rem;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background-color: var(--white);
+  color: var(--text-main);
+  cursor: pointer;
+  outline: none;
 }
 
 .main-layout {

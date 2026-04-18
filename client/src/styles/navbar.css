@@ -23,6 +23,12 @@
   text-decoration: none;
   color: var(--gator-navy);
   font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.navbar-links a:hover {
+  color: var(--gator-orange);
+  text-decoration: underline;
 }
 
 .log-button {
@@ -37,7 +43,7 @@
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
-.login-button:hover {
+.log-button:hover {
   background-color: var(--gator-orange);
   transform: translateY(-1px);
 }

@@ -34,19 +34,20 @@ function SignUp(){
     return (
         <div className="auth-container">
         <div className="auth-box">
-          <h2>Sign Up</h2>
+          <div className="auth-brand">CampusConnect</div>
+          <h2>Create your account</h2>
           <input
-            type="text" 
-            placeholder="Email.."
+            type="text"
+            placeholder="Email"
             onChange={(e) => setEmail(e.target.value)}
           />
-          <input 
-            type="password" 
-            placeholder="Password.." 
-            onChange={(e) => setPassword(e.target.value)} 
+          <input
+            type="password"
+            placeholder="Password"
+            onChange={(e) => setPassword(e.target.value)}
           />
-          <button onClick={signUp}>Create Account</button>
-          <button onClick={() => navigate('/login')}>Already have an account?</button>
+          <button className="auth-btn-primary" onClick={signUp}>Create Account</button>
+          <button className="auth-btn-secondary" onClick={() => navigate('/login')}>Already have an account? Sign in</button>
         </div>
       </div>
     );
