@@ -3,6 +3,9 @@ const express = require("express");
 const app = express();
 const bcrypt = require("bcryptjs")
 const pool = require('./db/db.js');
+const jwt = require("jsonwebtoken");
+const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
+const { authMiddleware } = require('./middleware/auth.js');
 
 const cors = require("cors");
 app.use(cors());
@@ -20,19 +23,27 @@ app.get("/api/test/users", (req,res) => {
     
 })
 
-app.get("/api/user", async (req, res) => {
+app.get("/api/user", authMiddleware, async (req, res) => {
     try {
-        const userId = req.query.id || 1; // Default to user 1 for testing
-        const result = await pool.query("SELECT id, email, privilege FROM users WHERE id = $1", [userId]);
-        
-        if (!result.rows) {
+        console.log("REQ.USER:", req.user);
+
+        if (!req.user || !req.user.userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const result = await pool.query(
+            "SELECT id, email, privilege FROM users WHERE id = $1",
+            [req.user.userId]
+        );
+
+        if (result.rows.length === 0) {
             return res.status(404).json({ message: "User not found." });
         }
-        
+
         res.json(result.rows[0]);
     } catch (err) {
-        console.error("Error fetching user:", err);
-        res.status(500).json({ message: "Unable to fetch user." });
+        console.error("USER ROUTE ERROR:", err);
+        res.status(500).json({ message: "Server error" });
     }
 });
 
@@ -49,7 +60,10 @@ app.get("/api/get-events", async (req, res) => {
 app.post("/api/login", async (req, res)=>{
     const {email, password} = req.body
     if (!email){
-        console.error(err)
+        return res.status(400).json({ message: "Email required" });
+    }
+    if (!password){
+        return res.status(400).json({ message: "Password required" });
     }
     try{
         const sql = "SELECT * FROM users WHERE email=$1 "
@@ -63,7 +77,20 @@ app.post("/api/login", async (req, res)=>{
         const valid = await bcrypt.compare(password, user.password_hash)
 
         if (valid){
-            return res.json({ email: user.email,name: user.name , privilege: user.privilege || 'user' });
+            const token = jwt.sign(
+                { userId: user.id, email: user.email, privilege: user.privilege },
+                JWT_SECRET,
+                { expiresIn: "7d" }
+            );
+
+            return res.json({ 
+                token,
+                user: {
+                    email: user.email,
+                    name: user.name,
+                    privilege: user.privilege || 'user'
+                }
+            });
         } else {
             return res.status(401).json({ message: "Invalid email or password." });
         }
@@ -87,7 +114,7 @@ app.post("/api/signup", async (req, res) =>{
         const result = await pool.query(queryText, values);
         res.status(300).send(result.rows[0])
     }catch(err){
-        if (result.status === '23505') {
+        if (err.code === '23505') {
             return res.status(409).send("Email already in use");
         }
 

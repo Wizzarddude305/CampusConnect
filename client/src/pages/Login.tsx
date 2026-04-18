@@ -13,38 +13,37 @@ export default function Login(){
     const {login} = useAuth();
 
     const signIn = async () => {
-        try{
-           const user = {
-              email: email,
-              password: password
-            }
-            
-            const response = await fetch("http://localhost:3000/api/login", {
-              method :"POST",
-              headers: {
-                  'Content-Type': 'application/json',
-                },
-              body:JSON.stringify(user), 
-            })
+      try {
+        const response = await fetch("http://localhost:3000/api/login", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
 
-            if (response.ok){
-              const data = await response.json();
-              login(data.email, data.email, data.privilege);
-              navigate('/');
-            } else {
-              const error = await response.json().catch(() => null);
-              console.error('Login failed', error || response.status);
-            }
-        } catch (err){
-            console.error(`FrontEnd: ${err}`)
+        if (response.ok){
+          const data = await response.json();
+
+          login(
+            data.token,
+            data.user.email,
+            data.user.name,
+            data.user.privilege
+          );
+
+          toast.success('Login successful!');
+          navigate('/');
+        } else {
+          const error = await response.json().catch(() => null);
+          toast.error(error?.message || 'Login failed');
+          console.error('Login failed', error || response.status);
         }
-            
 
-            
-            
-
-
-    }
+      } catch (err){
+        console.error(`FrontEnd: ${err}`);
+      }
+    };
 
     return (
         <div className="auth-container">
