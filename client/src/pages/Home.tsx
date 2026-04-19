@@ -1,6 +1,7 @@
 import Navbar from '../components/Navbar';
 import Header from '../components/Header'
 import Events from '../components/Events';
+import Organizations from '../components/Organizations';
 import { useEffect, useState } from "react";
 import { useAuth } from '../components/AuthContext';
 
@@ -10,6 +11,7 @@ function Home() {
   const [users, setUsers] = useState<any[]>([]);
   const { user } = useAuth();
   const isAdmin = user?.privilege === 'admin';
+  
 
   //Check for the availability of events and users every time yser privilege or the isAdmin variab;e is changed
   useEffect(() => {

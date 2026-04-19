@@ -160,6 +160,53 @@ app.post("/api/update-event", async (req, res) =>{
 
 })
 
+app.get("/api/get-organizations", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM organizations ORDER BY id");
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error loading organizations" });
+  }
+});
+
+app.post("/api/create-organization", async (req, res) => {
+  const { name, description, category, email } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ message: "Organization name is required" });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO organizations (name, description, category, email)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
+      [name, description, category, email]
+    );
+
+    res.status(201).json({
+      message: "Organization created successfully",
+      organizationId: result.rows[0].id
+    });
+  } catch (err) {
+    console.error("Error creating organization:", err);
+    res.status(500).json({ message: "Database error" });
+  }
+});
+
+app.delete("/api/delete-organization", async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    await pool.query("DELETE FROM organizations WHERE id = $1", [id]);
+    res.json({ message: "Organization deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Delete failed" });
+  }
+});
+
 app.post("/api/assign-privilege", async (req, res) => {
     const { userId, privilege } = req.body;
 

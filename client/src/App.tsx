@@ -6,6 +6,7 @@ import { AuthProvider } from './components/AuthContext';
 import AuthGate from './components/AuthGate';
 import { ToastContainer } from 'react-toastify';
 import './App.css'
+import OrganizationsPage from './pages/OrganizationsPage';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signUp" element={<SignUp />} />
             <Route path="*" element={<div>Page Not Found</div>} />
+            <Route path="/organizations" element={<OrganizationsPage />} />
           </Routes>
         </AuthGate>
       </Router>

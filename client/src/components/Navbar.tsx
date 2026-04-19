@@ -1,5 +1,6 @@
 import { useNavigate} from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { Link } from "react-router-dom";
 import "../styles/navbar.css"
 
 function Navbar() {
@@ -10,9 +11,9 @@ function Navbar() {
     <nav className="navbar">
       <div className="navbar-brand">CampusConnect</div>
       <div className="navbar-links">
-        <a href="#">Home</a>
-        <a href="#">Organizations</a>
-        <a href="#">About</a>
+        <Link to="/">Home</Link>
+        <Link to="/organizations">Organizations</Link>
+        <Link to="/about">About</Link>
       </div>
       {user ? (
         <div className="logged-in-banner">
