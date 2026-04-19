@@ -1,0 +1,749 @@
+================================================================================
+                           CAMPUSCONNECT
+                     SOFTWARE ENGINEERING PROJECT REPORT
+
+                  CEN 3031 — Introduction to Software Engineering
+                         University of Florida — Spring 2026
+================================================================================
+
+  Team Members
+  ------------
+  Daniel Gleeson       —  Scrum Master
+  Frank Ascencio       —  Product Manager
+  Jaiden Twyman        —  Development Team
+  Khan Alam            —  Development Team
+
+  Repository: github.com/Gleeson-Daniel/CampusConnect
+
+================================================================================
+                            TABLE OF CONTENTS
+================================================================================
+
+  Section 1 — Project Description
+    1.1  Project Overview ................................................  p. 2
+    1.2  Features & Requirements .........................................  p. 2
+    1.3  Use Case Diagram ................................................  p. 4
+    1.4  System Architecture / Component Diagram .........................  p. 4
+    1.5  Database Schema .................................................  p. 5
+    1.6  Sequence Diagram — RSVP Flow ....................................  p. 5
+    1.7  State Machine — Authentication ..................................  p. 6
+
+  Section 2 — Code & Project Management
+    2.1  Version Control Strategy ........................................  p. 7
+    2.2  Scrum Process & Sprint History ..................................  p. 7
+    2.3  Test Plan .......................................................  p. 8
+
+  Section 3 — Technical Details
+    3.1  Technology Stack ................................................  p. 9
+    3.2  API Reference ...................................................  p. 9
+    3.3  Installation Guide ..............................................  p. 10
+    3.4  Environment Variables & Credentials .............................  p. 11
+
+  Section 4 — Risk Management & Software Quality
+    4.1  Risk Register ...................................................  p. 12
+    4.2  Software Quality Attributes .....................................  p. 13
+
+  References ...............................................................  p. 15
+
+
+================================================================================
+              SECTION 1 — PROJECT DESCRIPTION
+================================================================================
+
+1.1  PROJECT OVERVIEW
+---------------------
+CampusConnect is a full-stack web application developed for University of
+Florida students to discover campus events, connect with student organizations,
+and RSVP — all in one centralized place. The motivation behind the project is
+a common student pain point: information about campus activities is scattered
+across email listservs, physical flyers, and disconnected social media
+accounts, making it difficult for students to stay informed and engaged.
+
+CampusConnect addresses this by providing a single, clean interface where
+students can browse upcoming events, search and filter by keyword or date
+range, register for events with a single click, and — for administrators —
+create, edit, and delete event listings. The system uses JWT-based
+authentication to differentiate three privilege levels: user, organization,
+and admin.
+
+
+1.2  FEATURES & REQUIREMENTS
+-----------------------------
+
+FUNCTIONAL REQUIREMENTS
+------------------------
+ID      Feature                 Description                           Privilege
+------  ----------------------  ------------------------------------  ---------
+FR-01   Event Discovery         View all upcoming events with title,  Public
+                                date, time, location, description,
+                                and attendee count
+FR-02   Live Search             Text search across event title,       Public
+                                location, and description — updates
+                                as the user types, no submit needed
+FR-03   Date Range Filter       Filter events to those occurring      Public
+                                within the next 7 days or 30 days
+FR-04   User Registration       Create an account with email and      Public
+                                password; password hashed with bcrypt
+FR-05   User Login              Authenticate with email/password;     Public
+                                receive a JWT valid for 7 days
+FR-06   RSVP / Cancel RSVP     Logged-in users can sign up for or    User+
+                                cancel registration on any event
+FR-07   Live Attendee Count     Each event card displays the current  Public
+                                number of attendees, updated on action
+FR-08   Create Event            Admin users can create new events     Admin
+                                via a modal form
+FR-09   Edit Event              Admin users can update any field of   Admin
+                                an existing event
+FR-10   Delete Event            Admin users can permanently remove    Admin
+                                an event and all associated RSVPs
+FR-11   About Page              Static page with project mission and  Public
+                                team member information
+FR-12   Session Persistence     Login state is retained across page   User+
+                                refreshes via localStorage token
+
+
+NON-FUNCTIONAL REQUIREMENTS
+----------------------------
+- Performance:     All API responses complete in under 500 ms under normal
+                   load. Client-side search and filtering avoid network
+                   round-trips on every keystroke.
+
+- Security:        Passwords are never stored in plaintext. All sensitive
+                   routes require a valid JWT. SQL queries use parameterized
+                   values to prevent injection. React's JSX escapes all
+                   rendered output, preventing XSS.
+
+- Usability:       The interface is operable without a manual. Toast
+                   notifications confirm every action (success in green,
+                   error in red). RSVP state is updated optimistically
+                   without requiring a page reload.
+
+- Maintainability: Frontend and backend are independently runnable with a
+                   clean API boundary. A global CSS custom-property design
+                   system defines the UF brand palette in one location.
+
+- Portability:     Docker Compose enables one-command deployment on any
+                   host with Docker installed. All secrets are externalized
+                   via environment variables.
+
+
+1.3  USE CASE DIAGRAM
+---------------------
+
+  +----------------------------------------------------------------------+
+  |                       CampusConnect System                           |
+  |                                                                      |
+  |  [Guest]  ------  Browse Events                                      |
+  |           ------  Search / Filter Events                             |
+  |           ------  View Event Details                                 |
+  |           ------  Register (Sign Up)                                 |
+  |           ------  Log In                                             |
+  |                                                                      |
+  |  [User]   ------  (all Guest use cases)                             |
+  |  (logged  ------  RSVP to Event                                      |
+  |   in)     ------  Cancel RSVP                                        |
+  |           ------  View My RSVPs                                      |
+  |           ------  Log Out                                            |
+  |                                                                      |
+  |  [Admin]  ------  (all User use cases)                              |
+  |           ------  Create Event                                       |
+  |           ------  Edit Event                                         |
+  |           ------  Delete Event                                       |
+  +----------------------------------------------------------------------+
+
+
+1.4  SYSTEM ARCHITECTURE / COMPONENT DIAGRAM
+---------------------------------------------
+
+  +------------------------------------------------------------------+
+  |  Browser  (React + TypeScript — Vite / Docker port 5173)         |
+  |                                                                  |
+  |  [Navbar]  [SearchBar]  [EventList + Modals]  [Auth Pages]       |
+  |                                                                  |
+  |         AuthContext  (React Context + localStorage)              |
+  +---------------------------+--------------------------------------+
+                              |  HTTP / JSON  (fetch API)
+  +---------------------------v--------------------------------------+
+  |  Node.js + Express  (port 3000)                                  |
+  |                                                                  |
+  |  authMiddleware (JWT verify)     bcrypt (password hashing)       |
+  |                                                                  |
+  |  Routes:                                                         |
+  |    POST   /api/signup          POST   /api/login                 |
+  |    GET    /api/user            GET    /api/get-events            |
+  |    POST   /api/create-event    POST   /api/update-event          |
+  |    DELETE /api/delete-event    GET    /api/my-rsvps              |
+  |    POST   /api/rsvp            DELETE /api/rsvp                  |
+  +---------------------------+--------------------------------------+
+                              |  node-postgres (pg pool)
+  +---------------------------v--------------------------------------+
+  |  Neon PostgreSQL  (cloud-hosted serverless Postgres)             |
+  |                                                                  |
+  |  Tables:  users  |  events  |  event_signups                    |
+  +------------------------------------------------------------------+
+
+
+1.5  DATABASE SCHEMA
+--------------------
+
+  -- Users table
+  CREATE TABLE users (
+      id            SERIAL PRIMARY KEY,
+      email         TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      name          TEXT,
+      privilege     TEXT DEFAULT 'user'   -- 'user' | 'organization' | 'admin'
+  );
+
+  -- Events table
+  CREATE TABLE events (
+      id          SERIAL PRIMARY KEY,
+      title       TEXT,
+      date        DATE,
+      time        TIME,
+      location    TEXT,
+      description TEXT
+  );
+
+  -- RSVPs (many-to-many join table)
+  CREATE TABLE event_signups (
+      id       SERIAL PRIMARY KEY,
+      user_id  INTEGER REFERENCES users(id)  ON DELETE CASCADE,
+      event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+      UNIQUE(user_id, event_id)    -- prevents duplicate RSVPs
+  );
+
+
+1.6  SEQUENCE DIAGRAM — RSVP FLOW
+----------------------------------
+
+  Browser (React)          Express Server               Neon PostgreSQL
+       |                        |                              |
+       |  GET /api/get-events   |                              |
+       |----------------------->|                              |
+       |                        |  SELECT e.*, COUNT(es.id)    |
+       |                        |  FROM events e               |
+       |                        |  LEFT JOIN event_signups es  |
+       |                        |  ON e.id = es.event_id       |
+       |                        |  GROUP BY e.id               |
+       |                        |----------------------------->|
+       |                        |<-----------------------------|
+       |<-----------------------|  [{id, title, rsvp_count}]   |
+       |  render event cards    |                              |
+       |                        |                              |
+       |  (user clicks Sign Up) |                              |
+       |                        |                              |
+       |  POST /api/rsvp        |                              |
+       |  Authorization: Bearer |                              |
+       |  { eventId: 42 }       |                              |
+       |----------------------->|                              |
+       |                        |  JWT.verify(token)           |
+       |                        |  INSERT INTO event_signups   |
+       |                        |  (user_id, event_id)         |
+       |                        |----------------------------->|
+       |                        |<-----------------------------|
+       |<-----------------------|  201 { message: "OK" }       |
+       |  optimistic UI update  |                              |
+       |  rsvp_count + 1        |                              |
+       |  button -> "Cancel RSVP"|                             |
+
+
+1.7  STATE MACHINE — AUTHENTICATION
+-------------------------------------
+
+                    +----------------+
+      page load --->|    LOADING     |
+                    +-------+--------+
+                            |  token in localStorage?
+              +-------------+-------------------+
+              | YES: GET /api/user              | NO
+              v                                 v
+       +------------+                   +----------------+
+       | VERIFYING  |                   |  LOGGED OUT    |<----------+
+       +----+-------+                   +-------+--------+           |
+            |  \                                |                    |
+         200 OK  401/error           user submits login form        |
+            |      |                            |                    |
+            v      v                            v                    |
+       +----------+ +----------+    POST /api/login                 |
+       | LOGGED   | |LOGGED OUT|         | 200 OK                   |
+       |   IN     | +----------+         | store token              |
+       +----+-----+                      | setUser()                |
+            |                            +---> [LOGGED IN]          |
+            | user clicks Logout                                     |
+            | localStorage.removeItem("token")                       |
+            | setUser(null)                                          |
+            +--------------------------------------------------------+
+
+
+================================================================================
+              SECTION 2 — CODE & PROJECT MANAGEMENT
+================================================================================
+
+2.1  VERSION CONTROL STRATEGY
+-------------------------------
+The team used GitHub for source control throughout the project. The repository
+is organized with 'master' as the stable integration branch. Feature work was
+developed in named topic branches and merged via Pull Requests (PRs) with at
+least one team member review before merging.
+
+  Branch Naming Conventions:
+    master              — stable, deployable state
+    feature/<name>      — new user-facing functionality
+    debug-<name>        — bug investigation and fix branches
+
+  Notable Merged PRs:
+  -----------------------------------------------------------------------
+  PR    Branch               Description
+  ----  -------------------  ----------------------------------------------
+  #9    debug-docker         Fixed Docker Compose config for live-reload
+  #10   AdminFunctionality   Working Create / Edit / Delete event controls;
+                             Delete button and event creation fully
+                             implemented
+
+
+2.2  SCRUM PROCESS & SPRINT HISTORY
+-------------------------------------
+The team adopted a lightweight Scrum framework with Daniel Gleeson serving as
+Scrum Master and Frank Ascencio as Product Manager / Product Owner. Work was
+organized into two-week sprints. The product backlog was maintained as a
+prioritized list of user stories, and each sprint began with planning and
+ended with a review and retrospective.
+
+  Sprint 1 — Goal: Project scaffolding & basic data display
+    Deliverables:
+    - Vite + React frontend initialized
+    - Express server running
+    - PostgreSQL tables created (users, events)
+    - Events fetched from database and displayed on the home page
+
+  Sprint 2 — Goal: Authentication & routing
+    Deliverables:
+    - JWT login / signup endpoints
+    - AuthContext provider for global user state
+    - React Router v6 integration: Home, Login, SignUp, About, Organizations
+    - Session persistence via localStorage (token survives page refresh)
+
+  Sprint 3 — Goal: Admin CRUD & UI polish
+    Deliverables:
+    - Event creation modal
+    - Event edit modal (React Portal fix for CSS stacking context / click
+      interception issue)
+    - Delete event button (orange styling)
+    - CSS design system with UF brand colors (--gator-blue, --gator-orange)
+    - Navbar routing with React Router Link components
+
+  Sprint 4 — Goal: Search, filter & RSVP
+    Deliverables:
+    - Live search bar (filters as user types)
+    - Date-range filter dropdown (This Week / This Month)
+    - RSVP / Cancel RSVP with optimistic UI updates and live attendee count
+    - Toast notifications for all user actions
+    - Docker Compose deployment configuration
+    - README finalized
+
+
+2.3  TEST PLAN
+--------------
+Testing was performed manually against a live Neon PostgreSQL database. Each
+feature was verified through a defined checklist before being merged to master.
+
+  -----------------------------------------------------------------------
+  ID     Test Case                  Steps / Expected Result         Status
+  -----  -------------------------  -------------------------------- ------
+  TC-01  Guest views events         Open home page without login.    Pass
+                                    All events displayed with all
+                                    fields and attendee count.
+
+  TC-02  Live search                Type text in search box.         Pass
+                                    Only matching events shown;
+                                    no submit button needed.
+
+  TC-03  Date filter — This Week    Select "This Week" from filter.  Pass
+                                    Only events within 7 days shown.
+
+  TC-04  Date filter — This Month   Select "This Month".             Pass
+                                    Only events within 30 days shown.
+
+  TC-05  User registration          Fill Sign Up form; submit.       Pass
+                                    Account created; redirected to
+                                    login page.
+
+  TC-06  User login                 Enter valid credentials.         Pass
+                                    JWT stored; user name in navbar;
+                                    logout button appears.
+
+  TC-07  Login persistence          Log in; hard-refresh page.       Pass
+                                    User remains logged in; token
+                                    re-validated against /api/user.
+
+  TC-08  Guest RSVP redirect        Click "Login to RSVP".           Pass
+                                    Redirected to /login.
+
+  TC-09  RSVP sign up               Log in; click "Sign Up".         Pass
+                                    Button -> "Cancel RSVP";
+                                    count increments; toast shown.
+
+  TC-10  Cancel RSVP                Click "Cancel RSVP".             Pass
+                                    Button -> "Sign Up";
+                                    count decrements; toast shown.
+
+  TC-11  Duplicate RSVP prevention  Send duplicate POST /api/rsvp.   Pass
+                                    Server returns HTTP 409 Conflict.
+
+  TC-12  Admin create event         Log in as admin; open Create     Pass
+                                    Event modal; submit form.
+                                    New event appears in grid.
+
+  TC-13  Admin edit event           Click "Edit Event"; change       Pass
+                                    title; click "Save Changes".
+                                    Modal closes; card updated.
+
+  TC-14  Admin delete event         Click "Delete Event".            Pass
+                                    Card removed from grid.
+
+  TC-15  Non-admin no admin UI      Log in as regular user.          Pass
+                                    Create / Edit / Delete buttons
+                                    are not rendered.
+
+  TC-16  Invalid login              Enter wrong password.            Pass
+                                    HTTP 401; error message shown
+                                    on the login page.
+  -----------------------------------------------------------------------
+
+
+================================================================================
+              SECTION 3 — TECHNICAL DETAILS
+================================================================================
+
+3.1  TECHNOLOGY STACK
+----------------------
+
+  Layer                 Technology             Notes
+  --------------------  ---------------------  --------------------------------
+  Frontend UI           React + TypeScript      v18; bundled with Vite 5
+  Client Routing        React Router v6         BrowserRouter, Link, useNavigate
+  State Management      React Context API       AuthContext for user session;
+                                               local state for events / RSVPs
+  Notifications         react-toastify          Success / error toasts after
+                                               every user action
+  Modal Rendering       React Portals           createPortal(jsx, document.body)
+                                               bypasses CSS stacking context
+  Backend Framework     Node.js + Express       v20 LTS
+  Authentication        JSON Web Tokens (JWT)   jsonwebtoken; expires in 7 days
+  Password Hashing      bcryptjs                10 salt rounds
+  Database Driver       node-postgres (pg)      Pool-based connection to Neon
+  Database              PostgreSQL (Neon)       Cloud-hosted serverless Postgres
+  Containerization      Docker + Compose        Separate frontend/backend
+                                               services; bridge network
+  Dev Runner            concurrently            Starts Vite + Node from root
+                                               via 'npm run dev'
+
+
+3.2  API REFERENCE
+-------------------
+
+  Method  Endpoint               Auth    Request Body
+  ------  ---------------------  ------  -----------------------------------
+  POST    /api/signup            No      { email, password }
+  POST    /api/login             No      { email, password }
+  GET     /api/user              Yes     —
+  GET     /api/get-events        No      —
+  POST    /api/create-event      No*     { title, date, time,
+                                          location, description }
+  POST    /api/update-event      No*     { eventId, title, date, time,
+                                          location, description }
+  DELETE  /api/delete-event      No*     { eventId }
+  GET     /api/my-rsvps          Yes     —
+  POST    /api/rsvp              Yes     { eventId }
+  DELETE  /api/rsvp              Yes     { eventId }
+  POST    /api/assign-privilege  No*     { userId, privilege }
+
+  * Admin-only actions are currently enforced in the UI. Server-side privilege
+    middleware is a planned enhancement (see Risk R-02 in Section 4).
+
+  Response Codes Used:
+    200  OK (successful GET or update)
+    201  Created (RSVP signed up, event created)
+    400  Bad Request (missing required fields)
+    401  Unauthorized (invalid credentials or missing token)
+    404  Not Found (user or event does not exist)
+    409  Conflict (duplicate email or duplicate RSVP)
+    500  Internal Server Error (database error)
+
+
+3.3  INSTALLATION GUIDE
+------------------------
+
+PREREQUISITES
+  - Node.js v20 or later   (verify: node --version)
+  - npm v9+  (bundled with Node)
+  - A Neon PostgreSQL project — create a free account at neon.tech and
+    copy the connection string from the Neon dashboard
+  - Docker Desktop (optional — only required for containerized deployment)
+
+LOCAL DEVELOPMENT (RECOMMENDED)
+
+  # 1. Clone the repository
+  git clone https://github.com/Gleeson-Daniel/CampusConnect.git
+  cd CampusConnect
+
+  # 2. Create the environment file
+  #    Create server/.env and fill in DATABASE_URL and JWT_SECRET
+  #    (see Section 3.4 for the exact format)
+
+  # 3. Install all dependencies (root + client + server)
+  npm install
+
+  # 4. Start both frontend and backend together
+  npm run dev
+  #   Frontend  ->  http://localhost:5173
+  #   Backend   ->  http://localhost:3000
+
+DOCKER DEPLOYMENT
+
+  # Build and start containers
+  docker compose up --build
+
+  # Stop containers
+  docker compose down
+
+  NOTE: On Windows, running 'docker compose up' may interfere with localhost
+  DNS resolution. If the browser shows ERR_CONNECTION_RESET after a Docker
+  session, run 'docker compose down' and switch back to 'npm run dev' for
+  local development.
+
+CREATING AN ADMIN ACCOUNT
+
+  1. Register a new account via the Sign Up page.
+  2. Find the user's id in the Neon SQL editor:
+       SELECT id, email FROM users;
+  3. Send a POST to /api/assign-privilege with body:
+       { "userId": <id>, "privilege": "admin" }
+     (e.g., via Postman, curl, or the browser dev tools)
+  4. The user must log out and log back in for the new privilege to
+     take effect in their JWT.
+
+
+3.4  ENVIRONMENT VARIABLES & CREDENTIALS
+-----------------------------------------
+All secrets are stored in server/.env, which is excluded from version control
+via .gitignore. The file must be created manually by each developer.
+
+  Contents of server/.env:
+  -----------------------------------------------------------------------
+  DATABASE_URL=postgresql://<user>:<password>@<host>/<dbname>?sslmode=require
+  JWT_SECRET=your_random_secret_string_here
+  PORT=3000
+  -----------------------------------------------------------------------
+
+  Variable        Purpose                         Where to Obtain
+  --------------  ------------------------------  ------------------------
+  DATABASE_URL    Connection string for Neon       Neon dashboard ->
+                  PostgreSQL                       Project -> Connection
+                                                  string
+  JWT_SECRET      Secret key for signing and       Generate with:
+                  verifying JWTs                   node -e "console.log(
+                                                  require('crypto')
+                                                  .randomBytes(32)
+                                                  .toString('hex'))"
+  PORT            Port Express listens on          Default: 3000
+
+  SECURITY NOTE: server/.env is listed in .gitignore and must never be
+  committed to the repository. Team members share the Neon connection string
+  through a secure channel (not in public chat or email).
+
+
+================================================================================
+              SECTION 4 — RISK MANAGEMENT & SOFTWARE QUALITY
+================================================================================
+
+4.1  RISK REGISTER
+-------------------
+
+  ID    Risk                             Likelihood  Impact  Mitigation
+  ----  -------------------------------  ----------  ------  ----------------
+  R-01  Database credentials             Medium      High    .gitignore
+        accidentally committed to                           excludes
+        GitHub                                              server/.env;
+                                                           developers trained
+                                                           never to commit
+                                                           secrets. GitHub
+                                                           secret scanning
+                                                           is enabled.
+
+  R-02  Admin routes lack server-side    High        High    HIGHEST PRIORITY
+        privilege enforcement —                              before production:
+        currently only UI-gated                             add authMiddleware
+                                                           + privilege check
+                                                           (req.user.privilege
+                                                           === 'admin') to
+                                                           all admin routes.
+
+  R-03  JWT tokens not invalidated       Medium      Medium  Tokens are
+        on logout                                           short-lived (7
+                                                           days). Logout
+                                                           removes token
+                                                           from localStorage.
+                                                           Full server-side
+                                                           blacklisting is a
+                                                           future enhancement.
+
+  R-04  Neon free-tier connection        Low         Medium  App uses a pg
+        limits exceeded under load                          connection pool
+                                                           (default max 10).
+                                                           Upgrade Neon tier
+                                                           or add PgBouncer
+                                                           for scale-out.
+
+  R-05  Hardcoded localhost:3000 API     High        Medium  Before production,
+        URLs break in deployment                            replace with a
+                                                           Vite env variable:
+                                                           import.meta.env
+                                                           .VITE_API_URL
+
+  R-06  Docker / localhost DNS           Medium      Low     Documented in
+        conflict on Windows                                 Installation
+                                                           Guide. Fix:
+                                                           docker compose down
+                                                           before switching
+                                                           back to npm run dev.
+
+  R-07  No server-side input             Low         Medium  Parameterized SQL
+        sanitization for event                              queries prevent
+        fields                                             SQL injection.
+                                                           React JSX escapes
+                                                           all rendered
+                                                           output (XSS safe).
+
+
+4.2  SOFTWARE QUALITY ATTRIBUTES
+----------------------------------
+
+SECURITY
+--------
+Passwords are hashed with bcrypt using 10 salt rounds before storage —
+plaintext passwords are never persisted at any layer. JWTs are signed with a
+secret key and carry a 7-day expiration; the server validates the signature on
+every protected request via the authMiddleware. SQL queries use parameterized
+values throughout the Express server (pool.query(sql, [values])), eliminating
+SQL injection risk. React's JSX automatically escapes all rendered values,
+protecting against stored cross-site scripting (XSS).
+
+The primary outstanding security gap is that admin mutation endpoints
+(/api/create-event, /api/update-event, /api/delete-event) do not yet verify
+server-side that the caller holds the 'admin' privilege. This is the highest-
+priority item before any public deployment.
+
+USABILITY
+---------
+Every user action that modifies server state (RSVP, cancel RSVP, create /
+edit / delete event) is confirmed with a color-coded toast notification from
+react-toastify — green for success, red for failure — positioned in the top-
+right corner and auto-dismissing. Attendee counts update optimistically in
+the UI immediately after a successful HTTP response, without requiring a page
+reload. The search bar filters results as the user types, with no Submit
+button. Modal dialogs are dismissible by clicking the overlay background or
+the × button in the top-right corner of the modal.
+
+The UF brand color palette (blue #003087, orange #FA4616) is applied
+consistently through CSS custom properties, giving the application a cohesive,
+recognizable feel for University of Florida students.
+
+RELIABILITY
+-----------
+Database-level UNIQUE(user_id, event_id) constraints prevent duplicate RSVPs
+regardless of race conditions or repeated client requests. Cascade delete on
+event_signups ensures that removing an event automatically cleans up all
+associated RSVP records, preventing orphaned rows. The Express server uses
+try/catch blocks on all async route handlers, returning structured JSON error
+responses with appropriate HTTP status codes rather than crashing on unexpected
+errors. The event_signups table is created at server startup with CREATE TABLE
+IF NOT EXISTS, ensuring the schema is always present without requiring a
+separate migration step.
+
+MAINTAINABILITY
+---------------
+The frontend and backend are independently runnable services with a clean API
+boundary (HTTP + JSON). Neither side imports code from the other; all
+communication is through documented endpoints. React components are organized
+by concern:
+
+  pages/         Home, Login, SignUp, About, Organizations
+  components/    Navbar, EventList, SearchBar, modal, AuthContext, AuthGate
+
+A global CSS custom-property design system defines the UF brand palette in a
+single location, making brand updates a one-file change. The root package.json
+uses 'concurrently' to start both services with a single 'npm run dev' command,
+reducing developer onboarding friction.
+
+PORTABILITY
+-----------
+Docker Compose provides a fully self-contained deployment unit. A single
+'docker compose up --build' command builds and starts both the frontend and
+backend containers on any host with Docker installed. Environment variables
+externalize all host-specific and secret configuration, keeping the codebase
+itself environment-agnostic. The frontend Dockerfile serves the Vite dev
+server inside a container on port 5173; the backend Dockerfile runs Node.js
+on port 3000; a shared bridge network (campusconnect-network) allows the two
+services to communicate. The backend includes a health check endpoint
+(/health) that Docker Compose polls before starting the frontend.
+
+PERFORMANCE
+-----------
+Event search and date filtering are implemented entirely client-side, meaning
+every keystroke does not generate a network request. Only the initial page
+load and explicit actions (RSVP, create/edit/delete) trigger API calls.
+RSVPs are applied optimistically: the button state and attendee count update
+immediately in the React state upon receiving a successful HTTP response;
+a full event list refetch is avoided. The PostgreSQL query for event listing
+uses a single LEFT JOIN with COUNT aggregation to retrieve events and their
+attendee counts in one database round trip:
+
+  SELECT e.*, COUNT(es.id)::int AS rsvp_count
+  FROM events e
+  LEFT JOIN event_signups es ON e.id = es.event_id
+  GROUP BY e.id
+  ORDER BY e.id
+
+
+================================================================================
+                               REFERENCES
+================================================================================
+
+[1]  Express.js Contributors. (2024). Express — Fast, unopinionated,
+     minimalist web framework for Node.js. https://expressjs.com/
+
+[2]  React Dev. (2024). React documentation — Quick start.
+     https://react.dev/learn
+
+[3]  React Router Contributors. (2024). React Router v6 documentation.
+     https://reactrouter.com/en/main
+
+[4]  Vitejs Contributors. (2024). Vite — Next Generation Frontend Tooling.
+     https://vitejs.dev/
+
+[5]  Auth0 by Okta. (2024). Introduction to JSON Web Tokens.
+     https://jwt.io/introduction
+
+[6]  Bcrypt.js Contributors. (2023). bcryptjs npm package. npm Registry.
+     https://www.npmjs.com/package/bcryptjs
+
+[7]  node-postgres Contributors. (2024). node-postgres (pg) documentation.
+     https://node-postgres.com/
+
+[8]  Neon Technologies. (2024). Neon serverless Postgres documentation.
+     https://neon.tech/docs/introduction
+
+[9]  Docker, Inc. (2024). Docker Compose overview. Docker Documentation.
+     https://docs.docker.com/compose/
+
+[10] OWASP Foundation. (2023). OWASP Top Ten Web Application Security Risks.
+     https://owasp.org/www-project-top-ten/
+
+[11] Schwaber, K., & Sutherland, J. (2020). The Scrum Guide. Scrum.org.
+     https://scrumguides.org/scrum-guide.html
+
+================================================================================
+                               END OF REPORT
+================================================================================
