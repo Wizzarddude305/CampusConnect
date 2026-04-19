@@ -1,3 +1,4 @@
+// Search input and date filter dropdown
 import "../styles/auth.css"
 
 interface SearchBarProps {
@@ -17,6 +18,7 @@ function SearchBar({ searchQuery, onSearch, filterRange, onFilter }: SearchBarPr
         placeholder="Search events by title, location, or description..."
         className="search-input"
       />
+      {/* Filter by all dates, this week, or this month */}
       <select
         value={filterRange}
         onChange={(e) => onFilter(e.target.value)}

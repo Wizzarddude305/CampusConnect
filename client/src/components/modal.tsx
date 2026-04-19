@@ -1,3 +1,4 @@
+// Modals for creating and editing events
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import '../styles/modal.css';

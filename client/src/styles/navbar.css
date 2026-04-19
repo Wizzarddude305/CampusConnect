@@ -1,3 +1,4 @@
+/* Navbar styles */
 .navbar {
   width: 100%;
   display: flex;
@@ -31,6 +32,7 @@
   text-decoration: underline;
 }
 
+/* Login/logout button */
 .log-button {
   border: none;
   border-radius: 999px;

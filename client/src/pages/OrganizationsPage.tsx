@@ -1,3 +1,4 @@
+// Organizations page with header and org list
 import Navbar from '../components/Navbar';
 import OrgHeader from '../components/OrgHeader';
 import Organizations from '../components/Organizations';

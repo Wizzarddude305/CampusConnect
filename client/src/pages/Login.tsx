@@ -1,3 +1,4 @@
+// Login page - sends credentials to the server and stores the token on success
 import { useState } from "react"
 import { useNavigate } from 'react-router-dom';
 import '../styles/auth.css';
@@ -11,6 +12,7 @@ export default function Login(){
 
     const {login} = useAuth();
 
+    // Send email and password to the server
     const signIn = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/login", {

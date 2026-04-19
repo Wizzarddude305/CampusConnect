@@ -1,3 +1,4 @@
+// Fetches and displays all events, handles RSVP and admin controls
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '../styles/eventStyles.css';
@@ -28,6 +29,7 @@ function EventList({ isAdmin, searchQuery, filterRange }: MyComponentProps){
     };
 
       
+    // Pull all events from the server
     const displayEvents = () =>{
             console.log("Redisplaying events")
             fetch("http://localhost:3000/api/get-events")
@@ -38,6 +40,7 @@ function EventList({ isAdmin, searchQuery, filterRange }: MyComponentProps){
             .catch((err) => console.error("EVENT ERROR:", err));
     }
 
+    // Get which events the current user already signed up for
     const fetchMyRsvps = () => {
         const token = localStorage.getItem("token");
         if (!token) return;
@@ -54,6 +57,7 @@ function EventList({ isAdmin, searchQuery, filterRange }: MyComponentProps){
         fetchMyRsvps();
     }, [user]);
 
+    // Toggle RSVP - signs up if not registered, cancels if already registered
     const handleRsvp = async (eventId: number) => {
         const token = localStorage.getItem("token");
         if (!token) { navigate("/login"); return; }
@@ -132,6 +136,7 @@ function EventList({ isAdmin, searchQuery, filterRange }: MyComponentProps){
         }
       }
 
+    // Filter events by search text and date range before rendering
     const now = new Date();
     const filteredEvents = events.filter((event) => {
       const q = searchQuery.toLowerCase();
