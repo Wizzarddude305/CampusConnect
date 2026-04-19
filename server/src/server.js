@@ -45,13 +45,73 @@ app.get("/api/user", authMiddleware, async (req, res) => {
     }
 });
 
+// Create event_signups table if it doesn't exist
+pool.query(`
+    CREATE TABLE IF NOT EXISTS event_signups (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+        UNIQUE(user_id, event_id)
+    )
+`).catch(err => console.error("Error creating event_signups table:", err));
+
 app.get("/api/get-events", async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM events ORDER BY id");
+        const result = await pool.query(`
+            SELECT e.*, COUNT(es.id)::int AS rsvp_count
+            FROM events e
+            LEFT JOIN event_signups es ON e.id = es.event_id
+            GROUP BY e.id
+            ORDER BY e.id
+        `);
         res.json(result.rows);
     } catch (err) {
         console.error("Error loading events:", err);
         res.status(500).json({ message: "Unable to load events." });
+    }
+});
+
+app.get("/api/my-rsvps", authMiddleware, async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT event_id FROM event_signups WHERE user_id = $1",
+            [req.user.userId]
+        );
+        res.json(result.rows.map(r => r.event_id));
+    } catch (err) {
+        console.error("Error fetching RSVPs:", err);
+        res.status(500).json({ message: "Unable to fetch RSVPs." });
+    }
+});
+
+app.post("/api/rsvp", authMiddleware, async (req, res) => {
+    const { eventId } = req.body;
+    if (!eventId) return res.status(400).json({ message: "eventId is required." });
+    try {
+        await pool.query(
+            "INSERT INTO event_signups (user_id, event_id) VALUES ($1, $2)",
+            [req.user.userId, eventId]
+        );
+        res.status(201).json({ message: "Successfully signed up for event." });
+    } catch (err) {
+        if (err.code === "23505") return res.status(409).json({ message: "Already signed up for this event." });
+        console.error("Error signing up:", err);
+        res.status(500).json({ message: "Database error." });
+    }
+});
+
+app.delete("/api/rsvp", authMiddleware, async (req, res) => {
+    const { eventId } = req.body;
+    if (!eventId) return res.status(400).json({ message: "eventId is required." });
+    try {
+        await pool.query(
+            "DELETE FROM event_signups WHERE user_id = $1 AND event_id = $2",
+            [req.user.userId, eventId]
+        );
+        res.status(200).json({ message: "RSVP cancelled." });
+    } catch (err) {
+        console.error("Error cancelling RSVP:", err);
+        res.status(500).json({ message: "Database error." });
     }
 });
 
@@ -156,8 +216,28 @@ app.delete("/api/delete-event", async (req, res) =>{
     }
 })
 
-app.post("/api/update-event", async (req, res) =>{
+app.post("/api/update-event", async (req, res) => {
+    const { eventId, title, date, time, location, description } = req.body;
 
+    if (!eventId) {
+        return res.status(400).json({ message: "eventId is required." });
+    }
+
+    try {
+        const result = await pool.query(
+            `UPDATE events SET title = $1, date = $2, time = $3, location = $4, description = $5 WHERE id = $6 RETURNING *`,
+            [title, date, time, location, description, eventId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Event not found." });
+        }
+
+        res.status(200).json({ message: "Event updated successfully.", event: result.rows[0] });
+    } catch (err) {
+        console.error("Error updating event:", err);
+        res.status(500).json({ message: "Database error while updating event." });
+    }
 })
 
 app.get("/api/get-organizations", async (req, res) => {
