@@ -1,3 +1,4 @@
+/* UF brand colors and shared design tokens used across the whole app */
 :root {
   --gator-blue: #0021a5;
   --gator-orange: #fa4616;
@@ -22,6 +23,7 @@
 
 
 
+/* Blue gradient banner at the top of the home and organizations pages */
 .header-section {
   width: 100%;
   background: linear-gradient(135deg, var(--gator-blue), #0d4cb3);
@@ -57,6 +59,7 @@
   color: #eef4ff;
 }
 
+/* Search bar and date filter sitting side by side */
 .search-row {
   display: flex;
   gap: 1rem;
@@ -116,6 +119,7 @@
   gap: 2rem;
 }
 
+/* White card container that wraps the events and organizations sections */
 .placeholder-card {
   background-color: var(--card-bg);
   border-radius: 24px;

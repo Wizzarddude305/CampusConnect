@@ -1,3 +1,4 @@
+/* Login and signup page styles */
 .auth-container {
   display: flex;
   justify-content: center;
@@ -48,6 +49,7 @@
   border-color: var(--gator-blue);
 }
 
+/* Primary and secondary button styles */
 .auth-btn-primary {
   width: 100%;
   padding: 0.75rem;

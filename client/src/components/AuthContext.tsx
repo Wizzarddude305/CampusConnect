@@ -1,3 +1,4 @@
+// Stores the logged in user globally
 import { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
 
 type User = {
@@ -53,6 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 }, []);
 
+  // Save token and update user state on login
   const login = (token: string, email: string, name: string, privilege?: string) => {
     localStorage.setItem("token", token);
 
@@ -63,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  // Clear token and user state on logout
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);

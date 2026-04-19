@@ -1,3 +1,4 @@
+/* About page styles */
 .about-hero {
   width: 100%;
   background: linear-gradient(135deg, var(--gator-blue), #0d4cb3);
@@ -64,6 +65,7 @@
   margin: 0 0 1.25rem;
 }
 
+/* Team member cards */
 .team-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));

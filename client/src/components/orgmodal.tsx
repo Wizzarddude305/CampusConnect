@@ -1,3 +1,4 @@
+// Modal for creating a new organization
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import '../styles/modal.css';

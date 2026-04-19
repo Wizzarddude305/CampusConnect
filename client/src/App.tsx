@@ -1,3 +1,4 @@
+// Sets up all the routes for the app
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -11,8 +12,10 @@ import OrganizationsPage from './pages/OrganizationsPage';
 
 function App() {
   return (
+    // AuthProvider wraps everything so any component can access the logged in user
     <AuthProvider>
       <Router>
+        {/* AuthGate waits for the auth check before rendering any page */}
         <AuthGate>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -25,6 +28,7 @@ function App() {
         </AuthGate>
       </Router>
 
+      {/* Toast notifications rendered here so they show on every page */}
       <ToastContainer aria-label="notifications" />
     </AuthProvider>
   );

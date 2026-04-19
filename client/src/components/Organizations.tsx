@@ -1,3 +1,4 @@
+// Fetches and displays all organizations, handles admin delete
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { OrganizationCreationModal } from "./orgmodal";
@@ -6,6 +7,7 @@ function Organizations({ isAdmin }: { isAdmin: boolean }) {
   const [orgs, setOrgs] = useState<any[]>([]);
   const [isCreatingOrg, setIsCreatingOrg] = useState(false);
 
+  // Pull all organizations from the server
   const fetchOrgs = () => {
     fetch("http://localhost:3000/api/get-organizations")
       .then(res => res.json())
@@ -31,6 +33,7 @@ function Organizations({ isAdmin }: { isAdmin: boolean }) {
   }
 };
 
+  // Delete an org and remove it from the list without re-fetching
   const deleteOrg = async (id: number) => {
     const res = await fetch("http://localhost:3000/api/delete-organization", {
       method: "DELETE",

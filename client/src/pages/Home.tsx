@@ -1,3 +1,4 @@
+// Home page - search state lives here so Header and EventList can share it
 import Navbar from '../components/Navbar';
 import Header from '../components/Header'
 import Events from '../components/Events';

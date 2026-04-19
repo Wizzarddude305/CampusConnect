@@ -1,3 +1,4 @@
+// Top navigation bar with links and login/logout button
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import "../styles/navbar.css"

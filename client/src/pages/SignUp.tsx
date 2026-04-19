@@ -1,3 +1,4 @@
+// Sign up page - creates a new account and redirects to login
 import { useState } from "react"
 import { useNavigate } from 'react-router-dom';
 import '../styles/auth.css';

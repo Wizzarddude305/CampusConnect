@@ -1,3 +1,4 @@
+// Hero banner with the search bar underneath
 import SearchBar from "./SearchBar"
 
 interface HeaderProps {

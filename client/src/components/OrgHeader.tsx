@@ -1,3 +1,4 @@
+// Hero banner for the organizations page
 function OrgHeader() {
   return (  
     <section className="header-section">

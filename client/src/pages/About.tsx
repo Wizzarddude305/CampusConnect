@@ -1,3 +1,4 @@
+// About page with mission statement and team info
 import Navbar from '../components/Navbar';
 import '../styles/about.css';
 
