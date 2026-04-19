@@ -49,48 +49,34 @@ function Organizations({ isAdmin }: { isAdmin: boolean }) {
   return (
     <div>
       <div className="event-header">
-        <h2 className="section-label">Organizations</h2>
+        <h2 className="section-label" style={{ margin: '0' }}>Organizations</h2>
         {isAdmin && (
-            <button onClick={() => setIsCreatingOrg(true)}>
+          <button id="createOrgButton" onClick={() => setIsCreatingOrg(true)}>
             Create Organization
-            </button>
+          </button>
         )}
       </div>
       {isCreatingOrg && (
         <OrganizationCreationModal
-            onClose={() => setIsCreatingOrg(false)}
-            onCreation={handleOrgCreation}
+          onClose={() => setIsCreatingOrg(false)}
+          onCreation={handleOrgCreation}
         />
-        )}
+      )}
 
       {orgs.length > 0 ? (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '20px',
-          marginTop: '20px'
-        }}>
+        <div className="event-grid">
           {orgs.map(org => (
-            <div key={org.id} style={{
-              padding: '20px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              backgroundColor: '#f9f9f9',
-              minHeight: '250px',
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
+            <div className="event-card" key={org.id}>
               <h4>{org.name}</h4>
               {org.category && <p><strong>Category:</strong> {org.category}</p>}
-              {org.description && <p>{org.description}</p>}
-
+              {org.email && <p><strong>Contact:</strong> {org.email}</p>}
+              {org.description && <p className="event-card-description">{org.description}</p>}
               {isAdmin && (
-                <button
-                  style={{ marginTop: "auto" }}
-                  onClick={() => deleteOrg(org.id)}
-                >
-                  Delete
-                </button>
+                <div className="event-card-actions">
+                  <button className="event-button event-button--danger" onClick={() => deleteOrg(org.id)}>
+                    Delete
+                  </button>
+                </div>
               )}
             </div>
           ))}
