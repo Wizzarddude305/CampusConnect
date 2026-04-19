@@ -167,8 +167,8 @@ app.post("/api/signup", async (req, res) =>{
     const saltRounds = 10
     //This then hashes the password with 10 scrambles
     const hashedPassword = await bcrypt.hash(password, saltRounds)
-    const queryText = `INSERT INTO users (email, password_hash) VALUES ($1 , $2);`
-    const values = [email, hashedPassword]
+    const queryText = `INSERT INTO users (email, password_hash, privilege) VALUES ($1 , $2, $3);`
+    const values = [email, hashedPassword, 'user']
 
     try{
         const result = await pool.query(queryText, values);
