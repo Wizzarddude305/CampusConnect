@@ -1,19 +1,33 @@
-import { useState } from 'react';
 import "../styles/auth.css"
-function SearchBar(){
-    const [query, setQuery] = useState('');
-    return(
-        <div className="search-row">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search will be enabled with future event and organization data"
-              className="search-input"
-            />
-          <button className="search-button">Explore</button>
-        </div>
-    );
+
+interface SearchBarProps {
+  searchQuery: string;
+  onSearch: (q: string) => void;
+  filterRange: string;
+  onFilter: (f: string) => void;
+}
+
+function SearchBar({ searchQuery, onSearch, filterRange, onFilter }: SearchBarProps) {
+  return (
+    <div className="search-row">
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={(e) => onSearch(e.target.value)}
+        placeholder="Search events by title, location, or description..."
+        className="search-input"
+      />
+      <select
+        value={filterRange}
+        onChange={(e) => onFilter(e.target.value)}
+        className="search-filter"
+      >
+        <option value="all">All Dates</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+      </select>
+    </div>
+  );
 }
 
 export default SearchBar;
