@@ -1,7 +1,8 @@
 import Navbar from '../components/Navbar';
 import Header from '../components/Header'
 import Events from '../components/Events';
-import { useState } from "react";
+import Organizations from '../components/Organizations';
+import { useEffect, useState } from "react";
 import { useAuth } from '../components/AuthContext';
 
 
@@ -10,6 +11,7 @@ function Home() {
   const [filterRange, setFilterRange] = useState('all');
   const { user } = useAuth();
   const isAdmin = user?.privilege === 'admin';
+  
 
   return (
     <main>
