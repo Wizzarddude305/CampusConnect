@@ -11,18 +11,19 @@ const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 
+//For Contributors: When creating a New API request make sure to format query requests with the prevention of SQL Injections.
+
+//This is the message in order to test if the server is running locally if you put it https://localhost:3000/
 app.get("/", (req, res) => {
     res.send("the server is running");
 })
 
+//This is just to check the health of database connection
 app.get("/health", (req, res) => {
   res.status(200).send("healthy");
 });
 
-app.get("/api/test/users", (req,res) => {
-    
-})
-
+//This is used in order to reauthrneticate and log the user in every refresh using the token provided
 app.get("/api/user", authMiddleware, async (req, res) => {
     try {
         if (!req.user || !req.user.userId) {
@@ -45,16 +46,7 @@ app.get("/api/user", authMiddleware, async (req, res) => {
     }
 });
 
-// Create event_signups table if it doesn't exist
-pool.query(`
-    CREATE TABLE IF NOT EXISTS event_signups (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-        event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
-        UNIQUE(user_id, event_id)
-    )
-`).catch(err => console.error("Error creating event_signups table:", err));
-
+//This fetches all events in the events database along with additional imformation to display in the front end.
 app.get("/api/get-events", async (req, res) => {
     try {
         const result = await pool.query(`
@@ -71,8 +63,10 @@ app.get("/api/get-events", async (req, res) => {
     }
 });
 
+//This is for the user in order to correctly display the button of canceling RSVP's on the client side
 app.get("/api/my-rsvps", authMiddleware, async (req, res) => {
     try {
+        //Gets all events from database that has the user's Id in the corresponding column
         const result = await pool.query(
             "SELECT event_id FROM event_signups WHERE user_id = $1",
             [req.user.userId]
@@ -84,22 +78,26 @@ app.get("/api/my-rsvps", authMiddleware, async (req, res) => {
     }
 });
 
+//This post is used in addition to the middleware to authenticate and then update the database that the user RSVP'd for an event
 app.post("/api/rsvp", authMiddleware, async (req, res) => {
     const { eventId } = req.body;
     if (!eventId) return res.status(400).json({ message: "eventId is required." });
     try {
+        //Here it inserts the userId and event Id accordingly in order to store appropriately until retrival 
         await pool.query(
             "INSERT INTO event_signups (user_id, event_id) VALUES ($1, $2)",
             [req.user.userId, eventId]
         );
         res.status(201).json({ message: "Successfully signed up for event." });
     } catch (err) {
+        //If signing up causes a Database confict in insertion (error code 23505) the provide a conflict error (409) else it was a Database Error (500)
         if (err.code === "23505") return res.status(409).json({ message: "Already signed up for this event." });
         console.error("Error signing up:", err);
         res.status(500).json({ message: "Database error." });
     }
 });
 
+//This is the delete request for RSVP's where essentially you unregister for an event.
 app.delete("/api/rsvp", authMiddleware, async (req, res) => {
     const { eventId } = req.body;
     if (!eventId) return res.status(400).json({ message: "eventId is required." });
@@ -115,6 +113,7 @@ app.delete("/api/rsvp", authMiddleware, async (req, res) => {
     }
 });
 
+//This is used for the user's authentication through the database so that they can log in with the proper credentials
 app.post("/api/login", async (req, res)=>{
     const {email, password} = req.body
     if (!email){
@@ -132,6 +131,7 @@ app.post("/api/login", async (req, res)=>{
         }
 
         const user = result.rows[0];
+        //The compare function is used in order to prevent a hash attack
         const valid = await bcrypt.compare(password, user.password_hash)
 
         if (valid){
@@ -159,11 +159,13 @@ app.post("/api/login", async (req, res)=>{
     }
 })
 
+//This is the sign up POST in order to account for the addition of a new account into the database
 app.post("/api/signup", async (req, res) =>{
     const {email, password} = req.body 
     // Amount of scrambles to do in order to hash password
-    // (10 is apparently industry standard being fast and secure)
+    // 10 is industry standard being fast and secure
     const saltRounds = 10
+    //This then hashes the password with 10 scrambles
     const hashedPassword = await bcrypt.hash(password, saltRounds)
     const queryText = `INSERT INTO users (email, password_hash) VALUES ($1 , $2);`
     const values = [email, hashedPassword]
@@ -181,6 +183,8 @@ app.post("/api/signup", async (req, res) =>{
     }
 })
 
+//This api creates an event according to what was entered in the event modal in the front end
+//It sends all the following information securely into the database
 app.post("/api/create-event", async (req, res) => {
 
     const { title, date, time, location, description } = req.body;
@@ -197,12 +201,16 @@ app.post("/api/create-event", async (req, res) => {
         //If successful move to this line and send a succesful message to the front end else you go to the catch error case
         res.status(201).json({ message: "Event created successfully.", eventId: result.rows[0]});
     }catch(err){
-        //If there's an error in the query state it in the front end as a database error
+        //If there's an error in the query state it in the front end send as a conflict erro if it was and then a database error otherwise
+         if (err.code === '23505') {
+            return res.status(409).send("This Event has been made already");
+        }
         console.error("Error creating event:", err);
         res.status(500).json({ message: "Database error while creating event." });
     }
 })
 
+//This simply deletes any event from the database in order to keep consistency in the event list
 app.delete("/api/delete-event", async (req, res) =>{
     const {eventId}  = req.body; 
     const queryText = `DELETE FROM events WHERE id = $1`
@@ -216,6 +224,7 @@ app.delete("/api/delete-event", async (req, res) =>{
     }
 })
 
+//This Post request is made in order to change values for a specific eventId to new onese sent from the front end
 app.post("/api/update-event", async (req, res) => {
     const { eventId, title, date, time, location, description } = req.body;
 
@@ -240,6 +249,7 @@ app.post("/api/update-event", async (req, res) => {
     }
 })
 
+//Get all current organizations from the database for display in the front end
 app.get("/api/get-organizations", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM organizations ORDER BY id");
@@ -250,6 +260,7 @@ app.get("/api/get-organizations", async (req, res) => {
   }
 });
 
+//This creates a new organization according to the JSON request provided
 app.post("/api/create-organization", async (req, res) => {
   const { name, description, category, email } = req.body;
 
@@ -258,6 +269,7 @@ app.post("/api/create-organization", async (req, res) => {
   }
 
   try {
+    //Uses Values in order to prevent SQL Injections
     const result = await pool.query(
       `INSERT INTO organizations (name, description, category, email)
        VALUES ($1, $2, $3, $4)
@@ -275,9 +287,11 @@ app.post("/api/create-organization", async (req, res) => {
   }
 });
 
+//This is a simple delete quest activated by a button in the front end
+//This request simply deletes the row in the databse that the organization is in
 app.delete("/api/delete-organization", async (req, res) => {
+    //We get the organization ID and delete the corresponding row in the database.
   const { id } = req.body;
-
   try {
     await pool.query("DELETE FROM organizations WHERE id = $1", [id]);
     res.json({ message: "Organization deleted" });
@@ -285,35 +299,6 @@ app.delete("/api/delete-organization", async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Delete failed" });
   }
-});
-
-app.post("/api/assign-privilege", async (req, res) => {
-    const { userId, privilege } = req.body;
-
-    if (!userId || !privilege) {
-        return res.status(400).json({ message: "userId and privilege are required." });
-    }
-
-    const validPrivileges = ["user", "organization", "admin"];
-    if (!validPrivileges.includes(privilege)) {
-        return res.status(400).json({ message: "Invalid privilege. Must be one of: user, organization, admin." });
-    }
-
-    try {
-        const result = await pool.query(
-            "UPDATE users SET privilege = $1 WHERE id = $2 RETURNING id, email, privilege",
-            [privilege, userId]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: "User not found." });
-        }
-
-        res.json({ message: "Privilege assigned successfully.", user: result.rows[0] });
-    } catch (err) {
-        console.error("Error assigning privilege:", err);
-        res.status(500).json({ message: "Database error while assigning privilege." });
-    }
 });
 
 const port = process.env.PORT || 3000

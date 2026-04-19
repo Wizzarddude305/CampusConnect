@@ -2,7 +2,7 @@
 import Navbar from '../components/Navbar';
 import Header from '../components/Header'
 import Events from '../components/Events';
-import { useEffect, useState } from "react";
+import {useState } from "react";
 import { useAuth } from '../components/AuthContext';
 
 
