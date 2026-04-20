@@ -4,6 +4,7 @@ import OrgHeader from '../components/OrgHeader';
 import Organizations from '../components/Organizations';
 import { useAuth } from '../components/AuthContext';
 
+
 function OrganizationsPage() {
   const { user } = useAuth();
   const isAdmin = user?.privilege === 'admin';

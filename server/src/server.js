@@ -242,7 +242,14 @@ app.post("/api/update-event", async (req, res) => {
 
 app.get("/api/get-organizations", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM organizations ORDER BY id");
+    const result = await pool.query(`
+      SELECT o.*, COUNT(om.id)::int AS member_count
+      FROM organizations o
+      LEFT JOIN organization_members om ON o.id = om.organization_id
+      GROUP BY o.id
+      ORDER BY o.id
+    `);
+
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -272,6 +279,64 @@ app.post("/api/create-organization", async (req, res) => {
   } catch (err) {
     console.error("Error creating organization:", err);
     res.status(500).json({ message: "Database error" });
+  }
+});
+
+app.get("/api/my-orgs", authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT organization_id FROM organization_members WHERE user_id = $1",
+      [req.user.userId]
+    );
+
+    res.json(result.rows.map(r => r.organization_id));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Unable to fetch memberships." });
+  }
+});
+
+app.post("/api/org-signup", authMiddleware, async (req, res) => {
+  const { organizationId } = req.body;
+
+  if (!organizationId) {
+    return res.status(400).json({ message: "organizationId is required." });
+  }
+
+  try {
+    await pool.query(
+      "INSERT INTO organization_members (user_id, organization_id) VALUES ($1, $2)",
+      [req.user.userId, organizationId]
+    );
+
+    res.status(201).json({ message: "Joined organization." });
+  } catch (err) {
+    if (err.code === "23505") {
+      return res.status(409).json({ message: "Already a member." });
+    }
+
+    console.error(err);
+    res.status(500).json({ message: "Database error." });
+  }
+});
+
+app.delete("/api/org-signup", authMiddleware, async (req, res) => {
+  const { organizationId } = req.body;
+
+  if (!organizationId) {
+    return res.status(400).json({ message: "organizationId is required." });
+  }
+
+  try {
+    await pool.query(
+      "DELETE FROM organization_members WHERE user_id = $1 AND organization_id = $2",
+      [req.user.userId, organizationId]
+    );
+
+    res.status(200).json({ message: "Left organization." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Database error." });
   }
 });
 
