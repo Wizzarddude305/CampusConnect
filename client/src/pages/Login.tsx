@@ -25,7 +25,6 @@ export default function Login(){
 
         if (response.ok){
           const data = await response.json();
-
           login(
             data.token,
             data.user.email,
@@ -33,11 +32,11 @@ export default function Login(){
             data.user.privilege
           );
 
-          toast.success('Login successful!');
+          toast.success('Login successful!',{theme: "colored"} );
           navigate('/');
         } else {
           const error = await response.json().catch(() => null);
-          toast.error(error?.message || 'Login failed');
+          toast.error(error?.message || 'Login failed' ,{theme: "colored"});
           console.error('Login failed', error || response.status);
         }
 

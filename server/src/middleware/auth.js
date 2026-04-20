@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
+//The authentication middle ware here is used in order to authenticate with JWT key 
 function authMiddleware(req, res, next) {
     const authHeader = req.headers.authorization;
 
