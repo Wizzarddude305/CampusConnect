@@ -146,7 +146,11 @@ function Organizations({ isAdmin }: { isAdmin: boolean }) {
       {orgs.length > 0 ? (
         <div className="event-grid">
           {orgs.map(org => {
-            const isJoined = joinedOrgIds.includes(org.id);
+            let isJoined = false
+            if (joinedOrgIds.length >= 0){
+              isJoined = joinedOrgIds.includes(org.id);
+            } 
+            
 
             return (
               <div className="event-card" key={org.id}>
